@@ -19,7 +19,7 @@ Thereby, operators can make sure that
 You can find more information about the underlying measurement methodology [here](https://www.sidnlabs.nl/a/weblog/keep-m-rolling-monitoring-ses-dnssec-algorithm-rollover?language_id=2&langcheck=true) or in this [talk](https://ripe76.ripe.net/archives/video/41/).
 A scientific article is currently under review.
 
-You can more information about DNSSEC rollovers [here](https://tools.ietf.org/html/rfc6781) and about the timing of rollovers [here](https://tools.ietf.org/html/rfc7583).
+You can find more information about DNSSEC rollovers [here](https://tools.ietf.org/html/rfc6781) and about the timing of rollovers [here](https://tools.ietf.org/html/rfc7583).
 
 
 ## Installation
