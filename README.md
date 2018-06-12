@@ -3,7 +3,7 @@
 
 ## Introduction 
 
-Rollover Mon imitates and analyzes measurements to monitor DNSSEC rollovers.
+Rollover Mon initiates and analyzes measurements to monitor DNSSEC rollovers.
 It gives operators of signed zones insights into:
 
 - the state of the deployment of their new signatures and keys and the withdrawal of old ones
@@ -16,12 +16,17 @@ Thereby, operators can make sure that
 - their keys are picked up by recursive resolvers
 - their zone stays secure throughout the whole rollover
 
+You can find more information about the underlying measurement methodology [here](https://www.sidnlabs.nl/a/weblog/keep-m-rolling-monitoring-ses-dnssec-algorithm-rollover?language_id=2&langcheck=true) or in this [talk](https://ripe76.ripe.net/archives/video/41/).
+A scientific article is currently under review.
+
+You can more information about DNSSEC rollovers [here](https://tools.ietf.org/html/rfc6781) and about the timing of rollovers [here](https://tools.ietf.org/html/rfc7583).
+
 
 ## Installation
 
 ### Requirements
 
-- >= Python 3
+- \>= Python 3
 - PIP
 - Write access to a (local) SQLite DB
 
@@ -56,7 +61,7 @@ After this step. You're good to go.
 ### Initiate Measurements
 
 To thoroughly monitor a stage of the rollover, the measurements should be
-started **before** the stage is started (that is, before a new key, signature
+started **before** the beginning of a stage (that is, before a new key, signature
 or DS record is replaced).
 
 Operators can initiate three different types of measurements:
