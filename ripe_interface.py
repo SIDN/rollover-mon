@@ -140,7 +140,7 @@ def create_measurement(monitoring_goal, target, query_type, direct, af, use_prob
     if use_probe_resolver:
          # Monitor Trust Chain  
          if monitor_trust_chain:
-             description = monitoring_goal+'_'+target+'_'+str(int(time.time()))
+             description = config['ROLLOVER']['ZONE']+'_'+monitoring_goal+'_'+target+'_'+str(int(time.time()))
              dns = Dns(af = af,
                   use_probe_resolver = True,
                   query_class = 'IN',
@@ -152,7 +152,7 @@ def create_measurement(monitoring_goal, target, query_type, direct, af, use_prob
 
          # Monitor Propagation Delay
          else: 
-             description = monitoring_goal+'_'+query_type+'_use_probe_resolver_'+str(int(time.time()))
+             description = config['ROLLOVER']['ZONE']+'_'+monitoring_goal+'_'+query_type+'_use_probe_resolver_'+str(int(time.time()))
              interval = int(config['TTLS']['ttl_'+query_type])
              dns = Dns(af = af,
                   use_probe_resolver = True,
@@ -165,7 +165,7 @@ def create_measurement(monitoring_goal, target, query_type, direct, af, use_prob
 
     # Monitor Publication Delay 
     else:
-        description = monitoring_goal+'_'+query_type+'_'+target+'_'+str(int(time.time()))
+        description = config['ROLLOVER']['ZONE']+'_'+monitoring_goal+'_'+query_type+'_'+target+'_'+str(int(time.time()))
         dns = Dns(af = af, 
                   target = target, 
                   query_class = 'IN', 
