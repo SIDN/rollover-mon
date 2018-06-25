@@ -7,8 +7,10 @@ from misc.config import config
 import database
 import analysis
 
-def create_measurements(monitoring_goal, query_type):
+def create_measurements(monitoring_goal, query_type, start_date, stop_date):
     """Creates new RIPE Atlas measurements and submits it via the RIPE Atlas API."""
+
+
 
     measurements = []
     targets = []
@@ -53,18 +55,33 @@ def create_measurements(monitoring_goal, query_type):
         measurements.append(create_measurement(monitoring_goal, config['MEASUREMENTS']['trust_chain_bogus'], 'AAAA', True, 6, True, True))
 
 
-
     sources = create_source()
 
+    # Define timing of measurements
+    if start_date is None:
+        start_date = datetime.utcnow()
+    elif start_date < datetime.utcnow():
+        print("'start-date' must be after current time")
+        return
+
+    if stop_date is not None:    
+        if stop_date < start_date:
+            print("'stop-date' must be after 'start_date'")
+            return
+
+        elif stop_date < datetime.utcnow():
+            print("'stop-date' must be after current time")
+            return
+
     atlas_request = AtlasCreateRequest(
-         start_time=datetime.utcnow(),
+         start_time=start_date,
+         stop_time=stop_date,
          key=config['RIPE']['api_key'],
          measurements=measurements,
          sources=[sources]
-    )    
+        )   
 
     is_success, response = atlas_request.create()
-    # print(is_success, response)
 
     if is_success:
         print('Measurements created successfully.')
@@ -95,7 +112,7 @@ def stop_measurements(monitoring_goal, query_type):
         return False
 
 
-def collect_measurement_results(monitoring_goal, query_type, details, start_date, stop_date):
+def collect_measurement_results(monitoring_goal, query_type, details, start_date, stop_date, plot):
     """Collects measurement results from RIPE Atlas."""
 
     msm_ids, msm_attributes = database.get_measurements(monitoring_goal, query_type, None)  
@@ -126,9 +143,9 @@ def collect_measurement_results(monitoring_goal, query_type, details, start_date
     if len(msm_results) > 0:
     
         if monitoring_goal == 'pubdelay' or monitoring_goal == 'propdelay':
-            analysis.get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date)
+            analysis.get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date, details)
         else:
-            analysis.get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date)
+            analysis.get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, details)
 
 
 

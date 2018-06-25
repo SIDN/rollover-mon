@@ -1,23 +1,29 @@
 from collections import defaultdict 
+#from matplotlib import pyplot as plt
 
 from ripe.atlas.sagan import DnsResult
+import pandas as pd
 
 from misc.tools import calc_keyid
 from misc.config import config
 
 
 
-def get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date):
+def get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date, details):
     """Processes the measurement results from RIPE Atlas
     for the publication and propagation delay.
     Prints the results as a string.
     """
+
+    time_series = []
 
     for msm_id, attributes in msm_attributes.items():
         
         responses_counter_zsk = 0
         responses_counter_ksk = 0
 
+        
+        
         if attributes[0] == 'pubdelay':
             print('Monitoring {} of {} at {} ({} - {})'.format(
                 attributes[0], attributes[1].upper(), attributes[2], 
@@ -48,6 +54,7 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
                                 protocol = answer.raw_data['Protocol']
                                 flags = answer.raw_data['Flags']
                                 key_tag = calc_keyid(flags, protocol, algorithm, answer.raw_data['Key'])
+                                created = dns_result.created
 
                                 if flags == 256:
                                     keys_zsk[key_tag]+=1
@@ -56,21 +63,29 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
                                     keys_ksk[key_tag]+=1
                                     responses_counter_ksk+=1
 
+                                time_series.append([created, attributes[2], key_tag])
+
                             elif (answer.raw_data['Type'] == 'RRSIG' 
                                   and answer.raw_data['TypeCovered'] == 'DNSKEY'
                                   and answer.name == config['ROLLOVER']['zone']):
 
                                 responses_counter_zsk+=1
 
+                                created = dns_result.created
                                 key_tag = answer.raw_data['KeyTag']
                                 keys_zsk[key_tag]+=1
+
+                                time_series.append([created, attributes[2], key_tag])
 
                             elif (answer.raw_data['Type'] == 'DS') and answer.name == config['ROLLOVER']['zone']:
 
                                 responses_counter_zsk+=1
 
+                                created = dns_result.created
                                 key_tag = answer.raw_data['Tag']
                                 keys_zsk[key_tag]+=1
+
+                                time_series.append([created, attributes[2], key_tag])
 
 
         print('Key Tag\t# Observed (Share %)')
@@ -81,11 +96,14 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
             print('{}\t\t{} ({}%)'.format(key, keys_ksk[key], round(keys_ksk[key]/responses_counter_ksk*100,2)))
 
 
-    return
+    if details:
+        get_details(time_series, attributes)
+
+    return 
 
 
 
-def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date):
+def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, plot):
     """Processes the measurement results from RIPE Atlas
     for the trust chain.
     Prints the results as a string.
@@ -108,6 +126,7 @@ def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date):
                         probe_id = dns_result.probe_id
                         destination_address = response.destination_address
                         vantage_point_id = str(probe_id)+'_'+destination_address
+                        created = dns_result.created
 
                         if vantage_point_id not in vantage_point_state:
                             vantage_point_state[vantage_point_id] = {'ipv4_valid': None, 'ipv4_bogus': None, 
@@ -192,3 +211,29 @@ def define_state(state_valid, state_bogus):
         return 'secure'
     else:
         return 'bogus'
+
+
+def get_details(time_series, attributes):
+    """Returns the results as a time series."""
+
+    if len(time_series) == 0:
+        return
+
+    df = pd.DataFrame(time_series, columns = ['created', 'target', 'state'])
+
+    freq = '0S'
+    if attributes[0] == 'pubdelay':
+        freq = str(config['MEASUREMENTS']['msm_frequency_publication_delay'])+'S'      
+    else:
+        freq = str(config['TTLS']['ttl_'+attributes[1]])+'S'  
+
+    df = df.groupby(pd.Grouper(key='created', freq=freq)).apply(lambda x: x.groupby(['target', 'state']).count())
+    df = df.unstack().fillna(0)
+    df = df.apply(lambda x: x/x.sum()*100, axis=1)
+    df = df.stack()
+    df = df.unstack(level=1)
+    df = df['created'].unstack().fillna(0)
+
+    print(df)
+
+    return
