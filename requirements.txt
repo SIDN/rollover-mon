@@ -3,8 +3,13 @@ certifi==2018.4.16
 cffi==1.11.5
 chardet==3.0.4
 cryptography==2.2.2
+cycler==0.10.0
 idna==2.6
+kiwisolver==1.0.1
+numpy==1.14.5
+pandas==0.23.1
 pycparser==2.18
+pyparsing==2.2.0
 python-dateutil==2.7.3
 pytz==2018.4
 requests==2.18.4
