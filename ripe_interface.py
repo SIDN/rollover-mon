@@ -112,7 +112,7 @@ def stop_measurements(monitoring_goal, query_type):
         return False
 
 
-def collect_measurement_results(monitoring_goal, query_type, details, start_date, stop_date, plot):
+def collect_measurement_results(monitoring_goal, query_type, details, start_date, stop_date):
     """Collects measurement results from RIPE Atlas."""
 
     msm_ids, msm_attributes = database.get_measurements(monitoring_goal, query_type, None)  
