@@ -38,62 +38,63 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
         keys_zsk = defaultdict(int)
         keys_ksk = defaultdict(int)
 
-        for measurement in msm_results[msm_id]:
+        if msm_id in msm_results:
+            for measurement in msm_results[msm_id]:
 
-            dns_result = DnsResult(measurement)
-            
-            if ~dns_result.is_error:
+                dns_result = DnsResult(measurement)
                 
-                for response in dns_result.responses:
-                    if response.abuf is not None:
-                        for answer in response.abuf.answers:
+                if ~dns_result.is_error:
+                    
+                    for response in dns_result.responses:
+                        if response.abuf is not None:
+                            for answer in response.abuf.answers:
 
-                            if answer.raw_data['Type'] == 'DNSKEY' and answer.name == config['ROLLOVER']['zone']:           
+                                if answer.raw_data['Type'] == 'DNSKEY' and answer.name == config['ROLLOVER']['zone']:           
 
-                                algorithm = answer.raw_data['Algorithm']
-                                protocol = answer.raw_data['Protocol']
-                                flags = answer.raw_data['Flags']
-                                key_tag = calc_keyid(flags, protocol, algorithm, answer.raw_data['Key'])
-                                created = dns_result.created
+                                    algorithm = answer.raw_data['Algorithm']
+                                    protocol = answer.raw_data['Protocol']
+                                    flags = answer.raw_data['Flags']
+                                    key_tag = calc_keyid(flags, protocol, algorithm, answer.raw_data['Key'])
+                                    created = dns_result.created
 
-                                if flags == 256:
-                                    keys_zsk[key_tag]+=1
+                                    if flags == 256:
+                                        keys_zsk[key_tag]+=1
+                                        responses_counter_zsk+=1
+                                    elif flags == 257:
+                                        keys_ksk[key_tag]+=1
+                                        responses_counter_ksk+=1
+
+                                    time_series.append([created, attributes[2], key_tag])
+
+                                elif (answer.raw_data['Type'] == 'RRSIG' 
+                                      and answer.raw_data['TypeCovered'] == 'DNSKEY'
+                                      and answer.name == config['ROLLOVER']['zone']):
+
                                     responses_counter_zsk+=1
-                                elif flags == 257:
-                                    keys_ksk[key_tag]+=1
-                                    responses_counter_ksk+=1
 
-                                time_series.append([created, attributes[2], key_tag])
+                                    created = dns_result.created
+                                    key_tag = answer.raw_data['KeyTag']
+                                    keys_zsk[key_tag]+=1
 
-                            elif (answer.raw_data['Type'] == 'RRSIG' 
-                                  and answer.raw_data['TypeCovered'] == 'DNSKEY'
-                                  and answer.name == config['ROLLOVER']['zone']):
+                                    time_series.append([created, attributes[2], key_tag])
 
-                                responses_counter_zsk+=1
+                                elif (answer.raw_data['Type'] == 'DS') and answer.name == config['ROLLOVER']['zone']:
 
-                                created = dns_result.created
-                                key_tag = answer.raw_data['KeyTag']
-                                keys_zsk[key_tag]+=1
+                                    responses_counter_zsk+=1
 
-                                time_series.append([created, attributes[2], key_tag])
+                                    created = dns_result.created
+                                    key_tag = answer.raw_data['Tag']
+                                    keys_zsk[key_tag]+=1
 
-                            elif (answer.raw_data['Type'] == 'DS') and answer.name == config['ROLLOVER']['zone']:
-
-                                responses_counter_zsk+=1
-
-                                created = dns_result.created
-                                key_tag = answer.raw_data['Tag']
-                                keys_zsk[key_tag]+=1
-
-                                time_series.append([created, attributes[2], key_tag])
+                                    time_series.append([created, attributes[2], key_tag])
 
 
-        print('Key Tag\t# Observed (Share %)')
-        for key in keys_zsk.keys():
-            print('{}\t\t{} ({}%)'.format(key, keys_zsk[key], round(keys_zsk[key]/responses_counter_zsk*100,2)))
+            print('Key Tag\t# Observed (Share %)')
+            for key in keys_zsk.keys():
+                print('{}\t\t{} ({}%)'.format(key, keys_zsk[key], round(keys_zsk[key]/responses_counter_zsk*100,2)))
 
-        for key in keys_ksk.keys():
-            print('{}\t\t{} ({}%)'.format(key, keys_ksk[key], round(keys_ksk[key]/responses_counter_ksk*100,2)))
+            for key in keys_ksk.keys():
+                print('{}\t\t{} ({}%)'.format(key, keys_ksk[key], round(keys_ksk[key]/responses_counter_ksk*100,2)))
 
 
     if details:
