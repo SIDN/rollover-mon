@@ -100,7 +100,7 @@ parameter.
 We can schedule measurements using the '--start-date' and '--stop-date' parameters, e.g.:
 
 ```
-python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --start --start-date "2018-06-05 14:00" --stop-date "2018-06-05 20:00
+python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --start --start-date "2018-06-05 14:00" --stop-date "2018-06-05 20:00"
 ```
 
 If we omit the '--stop-date' parameter, the measurement runs forever and
