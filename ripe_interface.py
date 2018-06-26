@@ -90,7 +90,7 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
         for i in range(len(response['measurements'])):
             database.init_measurement(response['measurements'][i], monitoring_goal, query_types[i], targets[i])
     else:
-        print(response)
+        print('RIPE Atlas API Error:', response)
 
     return is_success
 
