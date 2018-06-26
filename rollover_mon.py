@@ -17,6 +17,7 @@ def parse_args(args):
     details = False
     start_date = None
     stop_date = None
+    plot = None
 
     if (monitoring_target != "pubdelay" and monitoring_target != "propdelay" and  monitoring_target != "trustchain"):
         print("Monitorint target must be either 'pubdelay', 'propdelay' or 'trustchain'.")
@@ -41,37 +42,42 @@ def parse_args(args):
     elif args.status is True:
         action = 'status'
         details = args.details
-        start_date = args.start_date
-        stop_date = args.stop_date
-        if start_date is not None:
-            try:
-                start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M')
-            except Exception as e:
-                print("'start-date' must have format Y-m-d H:M")
-                raise e
-        if stop_date is not None:
-            try:
-                stop_date = datetime.strptime(stop_date, '%Y-%m-%d %H:%M')
-            except Exception as e:
-                print("'end-date' must have format Y-m-d H:M")
-                raise e
 
     else:
         print("Action required")     
-        raise AttributeError("Action required")     
+        raise AttributeError("Action required")  
 
-    return monitoring_target, record, action, details, start_date, stop_date
+
+    start_date = args.start_date
+    stop_date = args.stop_date
+    # plot = args.plot
+
+    if start_date is not None:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+        except Exception as e:
+            print("'start-date' must have format Y-m-d H:M")
+            raise e
+    if stop_date is not None:
+        try:
+            stop_date = datetime.strptime(stop_date, '%Y-%m-%d %H:%M')
+        except Exception as e:
+            print("'end-date' must have format Y-m-d H:M")
+            raise e   
+
+    return monitoring_target, record, action, details, start_date, stop_date, plot
 
 
 def main():
     args = parser.parse_args()
     try:
-        monitoring_target, record, action, details, start_date, stop_date = parse_args(args)
+        monitoring_target, record, action, details, start_date, stop_date, plot = parse_args(args)
     except Exception as e:
+        print(e)
         return
 
     if action == 'start':
-        ripe_interface.create_measurements(monitoring_target, record) 
+        ripe_interface.create_measurements(monitoring_target, record, start_date, stop_date) 
 
     elif action == 'stop':
         success = ripe_interface.stop_measurements(monitoring_target, record)
