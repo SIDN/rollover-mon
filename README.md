@@ -97,6 +97,15 @@ Depending on which record is added or withdrawn, the operator has to define
 which record the measurements should monitor with the help of the '--record'
 parameter.
 
+We can schedule measurements using the '--start-date' and '--stop-date' parameters, e.g.:
+
+```
+python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --start --start-date "2018-06-05 14:00" --stop-date "2018-06-05 20:00
+```
+
+If we omit the '--stop-date' parameter, the measurement runs forever and
+needs to be stopped with the '--stop' parameter (see below).
+
 
 #### Monitor Trust Chain
 
@@ -107,6 +116,10 @@ python rollover_mon.py trustchain  --start
 ```
 
 Note, that we do not have to set the '--record' parameter.
+
+Also the measurements for the trust chain can be scheduled with '--start-date'
+and '--stop-date'.
+
 
 
 ### Stop Measurements
@@ -212,3 +225,11 @@ As output we see, how many recursive resolvers are currently
 
 A sudden increase in resolvers that are 'bogus' or a decrease of resolvers
 that are 'secure' are signs for a failure during the rollover.
+
+
+**Details**
+
+With the option '--details', a more detailed output can be produced. It shows
+per query interval, how many resolvers or authoritative name servers (in %) see which key.
+
+For now, this option is only availabe for the 'propdelay' and 'pubdelay' options.
