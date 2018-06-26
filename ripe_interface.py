@@ -27,12 +27,14 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
         targets_ipv6 = targets_ipv6.split(',')
 
         for target in targets_ipv4:
-            targets.append(target.strip())
-            measurements.append(create_measurement(monitoring_goal, target.strip(), query_type.upper(), True, 4, False, False))
+            if len(target) > 0:
+                targets.append(target.strip())
+                measurements.append(create_measurement(monitoring_goal, target.strip(), query_type.upper(), True, 4, False, False))
 
         for target in targets_ipv6:
-            targets.append(target.strip())
-            measurements.append(create_measurement(monitoring_goal, target.strip(), query_type.upper(), True, 6, False, False))
+            if len(target) > 0:
+                targets.append(target.strip())
+                measurements.append(create_measurement(monitoring_goal, target.strip(), query_type.upper(), True, 6, False, False))
 
         query_types = [query_type]*4
 
@@ -87,6 +89,8 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
         print('Measurements created successfully.')
         for i in range(len(response['measurements'])):
             database.init_measurement(response['measurements'][i], monitoring_goal, query_types[i], targets[i])
+    else:
+        print(response)
 
     return is_success
 
