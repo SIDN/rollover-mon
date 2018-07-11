@@ -90,7 +90,7 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
         for i in range(len(response['measurements'])):
             database.init_measurement(response['measurements'][i], monitoring_goal, query_types[i], targets[i])
     else:
-        print(response)
+        print('RIPE Atlas API Error:', response)
 
     return is_success
 
@@ -131,7 +131,7 @@ def collect_measurement_results(monitoring_goal, query_type, details, start_date
 
 
     msm_results = {}
-       
+    
     for msm_id in msm_ids:
         kwargs = {
            "msm_id": msm_id,
@@ -145,7 +145,7 @@ def collect_measurement_results(monitoring_goal, query_type, details, start_date
             msm_results[msm_id] = results
 
     if len(msm_results) > 0:
-    
+        
         if monitoring_goal == 'pubdelay' or monitoring_goal == 'propdelay':
             analysis.get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date, details)
         else:

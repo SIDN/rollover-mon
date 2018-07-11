@@ -1,4 +1,5 @@
 from collections import defaultdict 
+from datetime import timedelta
 #from matplotlib import pyplot as plt
 
 from ripe.atlas.sagan import DnsResult
@@ -104,7 +105,7 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
 
 
 
-def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, plot):
+def get_state_trust_chain_old(msm_results, msm_attributes, start_date, stop_date, details):
     """Processes the measurement results from RIPE Atlas
     for the trust chain.
     Prints the results as a string.
@@ -197,6 +198,159 @@ def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, pl
                 ipv6_summary['bogus'], round(ipv6_summary['bogus']/ipv6_measurements*100,2),
                 ipv6_summary['unknown'], round(ipv6_summary['unknown']/ipv6_measurements*100,2)))
 
+
+
+def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, details):
+    """Processes the measurement results from RIPE Atlas
+    for the trust chain.
+    Prints the results as a string.
+    """
+
+    vantage_point_state = []
+
+
+    for msm_id, attributes in msm_attributes.items():       
+
+        for measurement in msm_results[msm_id]:
+
+            dns_result = DnsResult(measurement)
+
+            if ~dns_result.is_error:
+
+                for response in dns_result.responses:
+
+                    if response.abuf is not None:
+                        probe_id = dns_result.probe_id
+                        destination_address = response.destination_address
+                        vantage_point_id = str(probe_id)+'_'+destination_address
+                        created = dns_result.created
+
+                        # if vantage_point_id not in vantage_point_state:
+                        #     vantage_point_state[vantage_point_id] = []
+
+                        return_code = response.abuf.header.return_code
+
+
+                        if attributes[1] == 'valid':
+
+                            if attributes[2] == '4':
+                                vantage_point_state.append([vantage_point_id, 'ipv4', 'valid', return_code, created])
+
+                            else:
+                                vantage_point_state.append([vantage_point_id, 'ipv6', 'valid', return_code, created])
+
+                        else:
+
+                            if attributes[2] == '4':
+                                vantage_point_state.append([vantage_point_id, 'ipv4' , 'bogus', return_code, created])
+                            else:
+                                vantage_point_state.append([vantage_point_id, 'ipv6', 'bogus', return_code, created])
+
+
+   
+    df_vantage_point_states = pd.DataFrame(vantage_point_state, 
+                                            columns = ['vantage_point_id', 'ipv', 'msm', 'return_code', 'created'])
+    df_vantage_point_states = df_vantage_point_states.sort_values(['vantage_point_id', 'ipv', 'created'])
+
+
+
+    time_series_states = df_vantage_point_states.groupby(['vantage_point_id', 'ipv']).apply(lambda time_series: get_vp_state(time_series))
+
+
+
+    time_series_states = time_series_states.reset_index()
+
+    time_series_states_v4 = time_series_states[time_series_states.ipv=='ipv4']
+    time_series_states_v6 = time_series_states[time_series_states.ipv=='ipv6']
+
+   
+
+    ipv4_time_series = [[], []]
+    ipv6_time_series = [[], []]
+
+    for vp, ts in time_series_states_v4.iterrows():
+        ipv4_time_series[0]+=ts[0][0]
+        ipv4_time_series[1]+=ts[0][1]
+
+    for vp, ts in time_series_states_v6.iterrows():
+        ipv6_time_series[0]+=ts[0][0]
+        ipv6_time_series[1]+=ts[0][1]
+
+    # print(ipv4_time_series)
+    # ipv4_time_series = pd.DataFrame(ipv4_time_series, columns = ['created', 'state'])
+
+    ipv4_time_series = pd.DataFrame(ipv4_time_series).transpose()
+    ipv4_time_series.columns = ['created', 'state']
+    ipv4_time_series = ipv4_time_series.sort_values(['created'])
+    ipv4_time_series['counter'] = 1
+
+    ipv4_time_series = ipv4_time_series.groupby([pd.Grouper(key='created', freq=str(config['TTLS']['ttl_dnskey'])+'S'), 'state']
+        ).count().unstack().fillna(0)['counter']
+ 
+
+
+    ipv6_time_series = pd.DataFrame(ipv6_time_series).transpose()
+    ipv6_time_series.columns = ['created', 'state']
+    ipv6_time_series = ipv6_time_series.sort_values(['created'])
+    ipv6_time_series['counter'] = 1
+
+    ipv6_time_series = ipv6_time_series.groupby([pd.Grouper(key='created', freq=str(config['TTLS']['ttl_dnskey'])+'S'), 'state']
+        ).count().unstack().fillna(0)['counter']
+ 
+    if details:
+        print('Trust Chain State IPv4 ({} - {})'.format(
+                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+        print(ipv4_time_series.to_csv())
+        print('Trust Chain State IPv6 ({} - {})'.format(
+                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+        print(ipv6_time_series.to_csv())
+
+    else:
+        if len(ipv4_time_series)>0:
+            print('Trust Chain State IPv4 ({} - {}) in %'.format(
+                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+            print('Total VPs')
+            print(ipv4_time_series.sum())
+            print('VPs (in %)')
+            print((ipv4_time_series.sum()/ipv4_time_series.sum().sum()*100))
+
+        if len(ipv6_time_series)>0:
+            print('Trust Chain State IPv6 ({} - {})'.format(
+                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+            print('Total VPs')
+            print(ipv6_time_series.sum())
+            print('VPs (in %)')
+            print((ipv6_time_series.sum()/ipv6_time_series.sum().sum()*100))
+
+
+
+
+def get_vp_state(time_series):
+
+    # Within which time frame should the bogus and secure measurements results be combined
+    combination_time_frame_s = int(config['TTLS']['ttl_dnskey'])*2
+
+    time_series_valid = time_series[time_series.msm == 'valid']
+
+    time_series_state = [[], []]
+
+    for i, vals in time_series_valid.iterrows():
+        time_series_bogus = time_series[ (time_series.msm == 'bogus') 
+                                        & ((time_series.created>=vals.created - timedelta(seconds=combination_time_frame_s))
+                                         | (time_series.created<=vals.created + timedelta(seconds=combination_time_frame_s))) ]
+        # print(time_series_bogus)
+
+        if len(time_series_bogus) > 0:
+            state = define_state(vals.return_code, time_series_bogus.iloc[-1].return_code)
+            # print(state)
+        else:
+            state  = 'unknown'
+        
+        time_series_state[0].append(vals.created)
+        time_series_state[1].append(state)
+
+    # print(time_series_state)
+    return time_series_state
 
 
 

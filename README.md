@@ -51,7 +51,7 @@ to install the necessary packages in your python environment.
 
 #### 3. Initiate Database
 
-Execute 'init_db.py' to imitate the database. This script will create the
+Execute 'init_db.py' to initiate the database. This script will create the
 necessary table in the SQLite DB.
 
 After this step. You're good to go.
