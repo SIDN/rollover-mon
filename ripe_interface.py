@@ -131,7 +131,7 @@ def collect_measurement_results(monitoring_goal, query_type, details, start_date
 
 
     msm_results = {}
-       
+    
     for msm_id in msm_ids:
         kwargs = {
            "msm_id": msm_id,
@@ -145,7 +145,7 @@ def collect_measurement_results(monitoring_goal, query_type, details, start_date
             msm_results[msm_id] = results
 
     if len(msm_results) > 0:
-    
+        
         if monitoring_goal == 'pubdelay' or monitoring_goal == 'propdelay':
             analysis.get_state_publication_and_propagation(msm_results, msm_attributes, start_date, stop_date, details)
         else:
