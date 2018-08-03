@@ -388,7 +388,7 @@ def get_details(time_series, attributes):
     df = df.stack()
     df = df.unstack(level=1)
     df = df['created'].unstack().fillna(0)
-
-    print(df)
+    
+    print(df.reset_index().to_csv(index=False))
 
     return
