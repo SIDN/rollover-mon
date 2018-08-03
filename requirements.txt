@@ -2,7 +2,7 @@ asn1crypto==0.24.0
 certifi==2018.4.16
 cffi==1.11.5
 chardet==3.0.4
-cryptography==2.2.2
+cryptography==2.3
 cycler==0.10.0
 idna==2.6
 kiwisolver==1.0.1
