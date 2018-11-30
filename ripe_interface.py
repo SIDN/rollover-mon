@@ -36,7 +36,7 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
                 targets.append(target.strip())
                 measurements.append(create_measurement(monitoring_goal, target.strip(), query_type.upper(), True, 6, False, False))
 
-        query_types = [query_type]*4
+        query_types = [query_type]*len(targets)
 
 
     if monitoring_goal == 'propdelay':
@@ -85,6 +85,7 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
 
     is_success, response = atlas_request.create()
 
+    print(response['measurements'], query_types, targets)
     if is_success:
         print('Measurements created successfully.')
         for i in range(len(response['measurements'])):
