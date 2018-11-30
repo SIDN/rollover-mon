@@ -85,7 +85,6 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
 
     is_success, response = atlas_request.create()
 
-    print(response['measurements'], query_types, targets)
     if is_success:
         print('Measurements created successfully.')
         for i in range(len(response['measurements'])):
