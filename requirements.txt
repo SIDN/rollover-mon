@@ -17,5 +17,5 @@ ripe.atlas.cousteau==1.4.2
 ripe.atlas.sagan==1.2.2
 six==1.11.0
 socketIO-client==0.7.2
-urllib3==1.22
+urllib3>=1.23
 websocket-client==0.48.0
