@@ -1,5 +1,6 @@
 import struct
 import base64
+from matplotlib import pyplot as plt
 
 def calc_keyid(flags, protocol, algorithm, dnskey):
     """Returns the DNSKEY key ID."""
@@ -16,3 +17,28 @@ def calc_keyid(flags, protocol, algorithm, dnskey):
             cnt += s
 
     return ((cnt & 0xFFFF) + (cnt >> 16)) & 0xFFFF
+
+
+def plot_timeseries(timeseries, title, path):
+
+    color_dict = {'secure': 'green',
+                    'insecure': 'yellow',
+                    'bogus': 'red',
+                    'unkown': 'grey'
+                    }
+
+    timeseries = timeseries.iloc[:-1]
+    timeseries = timeseries.div(timeseries.sum(1), axis=0)*100
+
+    fig, ax = plt.subplots()
+
+    for column in timeseries:
+        ax.plot(timeseries[column], label=column, color = color_dict[column])
+
+    ax.set_ylabel('Probes (%)')
+    ax.set_xlabel('Date')
+    ax.set_ylim(0)
+
+    ax.legend()
+    fig.autofmt_xdate()
+    fig.savefig(path+'/'+title+'_trustchain.pdf')

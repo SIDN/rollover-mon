@@ -138,19 +138,19 @@ python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --stop
 python rollover_mon.py trustchain  --stop
 ```
 
-### Get Rollover State
+### Get Rollover Status
 
-To get the state of the rollover, the following command is used:
+To get the status of the rollover, the following command is used:
 
 ```
 # Publication Delay
-python rollover_mon.py pubdelay --record [dnskey|rrsig|ds] --state
+python rollover_mon.py pubdelay --record [dnskey|rrsig|ds] --status
 
 # Propagation Delay
-python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --state
+python rollover_mon.py propdelay --record [dnskey|rrsig|ds] --status
 
 # Trust Chain
-python rollover_mon.py trustchain  --state
+python rollover_mon.py trustchain  --status
 ```
 
 By default, the measurements of the last hours are analyzed.
@@ -160,7 +160,7 @@ which time frame we want to analyze the measurements, e.g.:
 
 ```
 # Publication Delay
-python rollover_mon.py pubdelay --record [dnskey|rrsig|ds] --state --start-date "2018-06-05 14:00" --stop-date "2018-06-05 20:00"
+python rollover_mon.py pubdelay --record [dnskey|rrsig|ds] --status --start-date "2018-06-05 14:00" --stop-date "2018-06-05 20:00"
 ```
 
 If we omit the parameter '--stop-date' then every measurement from '--start-date' until now are analyzed.
@@ -171,7 +171,7 @@ If we omit the parameter '--stop-date' then every measurement from '--start-date
 **Publication Delay:**
 
 ```
-python rollover_mon.py pubdelay --record dnskey --state
+python rollover_mon.py pubdelay --record dnskey --status
 Monitoring pubdelay of DNSKEY at 192.0.2.1 (2018-06-07 14:18 - 2018-06-07 15:18)
 Key Tag	# Observed (Share %)
 55719		4 (66.67%)
@@ -211,17 +211,17 @@ The share is calculated for ZSKs and KSKs separately.
 
 ```
 python rollover_mon.py trustchain --status
-Trust Chain State IPv4 (2018-06-07 14:26 - 2018-06-07 15:26)
-Insecure:	1 (25.0%)	Secure:	3 (75.0%)	Bogus:	0 (0.0%)	Unknown:	0 (0.0%)
-Trust Chain State IPv6 (2018-06-07 14:26 - 2018-06-07 15:26)
-Insecure:	1 (25.0%)	Secure:	2 (50.0%)	Bogus:	0 (0.0%)	Unknown:	1 (25.0%)
+Trust Chain State IPv4 (2020-03-10 08:13 - 2020-03-10 09:13)
+Insecure: 153 (100.0%)	Secure: 0 (0.0%)	Bogus: 0 (0.0%)	Unkown: 0 (0.0%)
+Trust Chain State IPv6 (2020-03-10 08:13 - 2020-03-10 09:13)
+Insecure: 153 (100.0%)	Secure: 0 (0.0%)	Bogus: 0 (0.0%)	Unkown: 0 (0.0%)
 ```
 As output we see, how many recursive resolvers are currently 
 
 - Insecure: Are able to resolve the test domains without any problem but do not validate
 - Secure: Are able to resolve the test domains and do DNSSEC validation
 - Bogus: Are not able to resolve the test domains
-- Unknown: We have not seen enough measurements for the resolver to define its state
+- Unknown: We have not seen enough measurements for the resolver to define its status
 
 A sudden increase in resolvers that are 'bogus' or a decrease of resolvers
 that are 'secure' are signs for a failure during the rollover.
@@ -229,7 +229,18 @@ that are 'secure' are signs for a failure during the rollover.
 
 **Details**
 
-With the option '--details', a more detailed output can be produced. It shows
-per query interval, how many resolvers or authoritative name servers (in %) see which key.
+With the option '--details', a more detailed output can be produced. 
+Its output depends on the chosen option:
 
-For now, this option is only availabe for the 'propdelay' and 'pubdelay' options.
+- propdelay' and 'pubdelay' options
+Shows per query interval, how many resolvers or authoritative name servers (in %) see which key.
+
+- 'trustchain' option
+Does not generate an output but generates a time series of the state of the measured resolvers across and stores it as a CSV.
+The CSV is stored in the location defined in the _[OUTPUT]_ --> _csv_path_ parameter defined in _config.ini_.
+Every time the command is run, a new CSV is created and the old one is overwritten.
+
+Additionally, the time series is plotted as a PDF. 
+The PDF is stored in the location defined in the _[OUTPUT]_ --> _plot_path_ parameter defined in _config.ini_.
+Every time the command is run, a new PDF is created and the old one is overwritten.
+

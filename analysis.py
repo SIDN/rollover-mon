@@ -5,7 +5,7 @@ from datetime import timedelta
 from ripe.atlas.sagan import DnsResult
 import pandas as pd
 
-from misc.tools import calc_keyid
+from misc.tools import calc_keyid, plot_timeseries
 from misc.config import config
 
 
@@ -104,102 +104,6 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
     return 
 
 
-
-def get_state_trust_chain_old(msm_results, msm_attributes, start_date, stop_date, details):
-    """Processes the measurement results from RIPE Atlas
-    for the trust chain.
-    Prints the results as a string.
-    """
-
-    vantage_point_state = {}
-
-
-    for msm_id, attributes in msm_attributes.items():       
-
-        for measurement in msm_results[msm_id]:
-
-            dns_result = DnsResult(measurement)
-
-            if ~dns_result.is_error:
-
-                for response in dns_result.responses:
-
-                    if response.abuf is not None:
-                        probe_id = dns_result.probe_id
-                        destination_address = response.destination_address
-                        vantage_point_id = str(probe_id)+'_'+destination_address
-                        created = dns_result.created
-
-                        if vantage_point_id not in vantage_point_state:
-                            vantage_point_state[vantage_point_id] = {'ipv4_valid': None, 'ipv4_bogus': None, 
-                                                                        'ipv6_valid': None, 'ipv6_bogus': None}
-
-                        return_code = response.abuf.header.return_code
-
-
-                        if attributes[1] == 'valid':
-
-                            if attributes[2] == '4':
-                                vantage_point_state[vantage_point_id]['ipv4_valid'] = return_code
-
-                            else:
-                                vantage_point_state[vantage_point_id]['ipv6_valid'] = return_code
-
-                        else:
-
-                            if attributes[2] == '4':
-                                vantage_point_state[vantage_point_id]['ipv4_bogus'] = return_code
-                            else:
-                                vantage_point_state[vantage_point_id]['ipv6_bogus'] = return_code
-
-
-
-
-    ipv4_summary = defaultdict(int)
-    ipv6_summary = defaultdict(int)
-
-    total_summary = {'ipv4_valid': defaultdict(int), 'ipv4_bogus': defaultdict(int), 
-                        'ipv6_valid': defaultdict(int), 'ipv6_bogus': defaultdict(int)}
-
-    ipv4_measurements = 0
-    ipv6_measurements = 0
-
-    for vantage_point in vantage_point_state.keys():
-
-        state = define_state(vantage_point_state[vantage_point]['ipv4_valid'], vantage_point_state[vantage_point]['ipv4_bogus'])
-        ipv4_summary[state]+=1
-        ipv4_measurements+=1
-
-        state = define_state(vantage_point_state[vantage_point]['ipv6_valid'], vantage_point_state[vantage_point]['ipv6_bogus'])
-        ipv6_summary[state]+=1
-        ipv6_measurements+=1
-
-        total_summary['ipv4_valid'][vantage_point_state[vantage_point]['ipv4_valid']]+=1
-        total_summary['ipv4_bogus'][vantage_point_state[vantage_point]['ipv4_bogus']]+=1
-        total_summary['ipv6_valid'][vantage_point_state[vantage_point]['ipv6_valid']]+=1
-        total_summary['ipv6_bogus'][vantage_point_state[vantage_point]['ipv6_bogus']]+=1
-
-
-    if len(ipv4_summary)>0:
-        print('Trust Chain State IPv4 ({} - {})'.format(
-            start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-        print('Insecure:\t{} ({}%)\tSecure:\t{} ({}%)\tBogus:\t{} ({}%)\tUnknown:\t{} ({}%)'.format(
-                ipv4_summary['insecure'], round(ipv4_summary['insecure']/ipv4_measurements*100,2),
-                ipv4_summary['secure'], round(ipv4_summary['secure']/ipv4_measurements*100,2),
-                ipv4_summary['bogus'], round(ipv4_summary['bogus']/ipv4_measurements*100,2),
-                ipv4_summary['unknown'], round(ipv4_summary['unknown']/ipv4_measurements*100,2)))
-
-    if len(ipv6_summary)>0:
-        print('Trust Chain State IPv6 ({} - {})'.format(
-            start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-        print('Insecure:\t{} ({}%)\tSecure:\t{} ({}%)\tBogus:\t{} ({}%)\tUnknown:\t{} ({}%)'.format(
-                ipv6_summary['insecure'], round(ipv6_summary['insecure']/ipv6_measurements*100,2),
-                ipv6_summary['secure'], round(ipv6_summary['secure']/ipv6_measurements*100,2),
-                ipv6_summary['bogus'], round(ipv6_summary['bogus']/ipv6_measurements*100,2),
-                ipv6_summary['unknown'], round(ipv6_summary['unknown']/ipv6_measurements*100,2)))
-
-
-
 def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, details):
     """Processes the measurement results from RIPE Atlas
     for the trust chain.
@@ -259,6 +163,10 @@ def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, de
 
 
     time_series_states = time_series_states.reset_index()
+    
+    if 'ipv' not in time_series_states.columns:
+        print('Measurement not started yet or no results available')
+        return
 
     time_series_states_v4 = time_series_states[time_series_states.ipv=='ipv4']
     time_series_states_v6 = time_series_states[time_series_states.ipv=='ipv6']
@@ -298,31 +206,87 @@ def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, de
         ).count().unstack().fillna(0)['counter']
  
     if details:
-        print('Trust Chain State IPv4 ({} - {})'.format(
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-        print(ipv4_time_series.to_csv())
-        print('Trust Chain State IPv6 ({} - {})'.format(
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-        print(ipv6_time_series.to_csv())
+        print('Store time series to CSV and create graph')
+        try:
+            ipv4_time_series.to_csv(config['OUTPUT']['csv_path']+'/ip_v4_timeseries.csv')
+            ipv6_time_series.to_csv(config['OUTPUT']['csv_path']+'/ip_v6_timeseries.csv')
+        except Exception as e:
+            print('Unable to save CSV')
+            print(e)
 
+
+        try:
+            plot_timeseries(ipv4_time_series, 'IPv4', config['OUTPUT']['plot_path'])
+            plot_timeseries(ipv4_time_series, 'IPv6', config['OUTPUT']['plot_path'])
+        except Exception as e:
+            print('Unable to plot and save graph')
+            print(e)
     else:
         if len(ipv4_time_series)>0:
-            print('Trust Chain State IPv4 ({} - {}) in %'.format(
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-            print('Total VPs')
-            print(ipv4_time_series.sum())
-            print('VPs (in %)')
-            print((ipv4_time_series.sum()/ipv4_time_series.sum().sum()*100))
+            tot = ipv4_time_series.sum().sum()
+            
+            insecure = 0
+            if 'insecure' in ipv4_time_series.columns:
+                insecure = ipv4_time_series['insecure'].sum()
+
+            secure = 0
+            if 'secure' in ipv4_time_series.columns:
+                secure = ipv4_time_series['secure'].sum()
+
+            bogus = 0
+            if 'bogus' in ipv4_time_series.columns:
+                insecure = ipv4_time_series['bogus'].sum()
+
+            unknown = 0
+            if 'unknown' in ipv4_time_series.columns:
+                unknown = ipv4_time_series['unknown'].sum()
+  
+
+            print('Trust Chain State IPv4 ({} - {})'.format(
+                  start_date.strftime('%Y-%m-%d %H:%M'),
+                  stop_date.strftime('%Y-%m-%d %H:%M')))
+            print('Insecure: {} ({}%)\tSecure: {} ({}%)\tBogus: {} ({}%)\tUnkown: {} ({}%)'.format(
+                int(insecure),
+                round(insecure/tot*100,2),
+                secure,
+                round(secure/tot*100,2),
+                bogus,
+                round(bogus/tot*100,2),
+                unknown,
+                round(unknown/tot*100,2)))
 
         if len(ipv6_time_series)>0:
+            tot = ipv6_time_series.sum().sum()
+            
+            insecure = 0
+            if 'insecure' in ipv6_time_series.columns:
+                insecure = ipv6_time_series['insecure'].sum()
+
+            secure = 0
+            if 'secure' in ipv6_time_series.columns:
+                secure = ipv6_time_series['secure'].sum()
+
+            bogus = 0
+            if 'bogus' in ipv6_time_series.columns:
+                insecure = ipv6_time_series['bogus'].sum()
+
+            unknown = 0
+            if 'unknown' in ipv6_time_series.columns:
+                unknown = ipv6_time_series['unknown'].sum()
+
+
             print('Trust Chain State IPv6 ({} - {})'.format(
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-            print('Total VPs')
-            print(ipv6_time_series.sum())
-            print('VPs (in %)')
-            print((ipv6_time_series.sum()/ipv6_time_series.sum().sum()*100))
-
-
+                  start_date.strftime('%Y-%m-%d %H:%M'),
+                  stop_date.strftime('%Y-%m-%d %H:%M')))
+            print('Insecure: {} ({}%)\tSecure: {} ({}%)\tBogus: {} ({}%)\tUnkown: {} ({}%)'.format(
+                insecure,
+                round(insecure/tot*100,2),
+                secure,
+                round(secure/tot*100,2),
+                bogus,
+                round(bogus/tot*100,2),
+                unknown,
+                round(unknown/tot*100,2)))
 
 
 def get_vp_state(time_series):
