@@ -3,7 +3,8 @@
 ## Latest Change (2020-03-10)
 
 - For the option _trustchain_ the behavior of the _--details_ parameter has changed. It now saves a time series of the resolver state as a CSV and plots the timeseries as a PDF.
--
+- Plotting requires matplotlib library
+- _config.ini_ has 2 new parameters to define where to store 
 
 
 ## Introduction 
