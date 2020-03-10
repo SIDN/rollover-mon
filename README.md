@@ -1,5 +1,10 @@
 # Rollover Mon (Beta) README
 
+## Latest Change (2020-03-10)
+
+- For the option _trustchain_ the behavior of the _--details_ parameter has changed. It now saves a time series of the resolver state as a CSV and plots the timeseries as a PDF.
+-
+
 
 ## Introduction 
 
@@ -233,9 +238,11 @@ With the option '--details', a more detailed output can be produced.
 Its output depends on the chosen option:
 
 - propdelay' and 'pubdelay' options
+
 Shows per query interval, how many resolvers or authoritative name servers (in %) see which key.
 
 - 'trustchain' option
+
 Does not generate an output but generates a time series of the state of the measured resolvers across and stores it as a CSV.
 The CSV is stored in the location defined in the _[OUTPUT]_ --> _csv_path_ parameter defined in _config.ini_.
 Every time the command is run, a new CSV is created and the old one is overwritten.
