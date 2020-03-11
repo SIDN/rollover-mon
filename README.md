@@ -1,6 +1,6 @@
 # Rollover Mon (Beta) README
 
-## Latest Change (2020-03-10)
+## Latest Change (2020-03-11)
 
 - For the option _pubdelay_ and _propdelay_ the behavior of the _--details_ parameter has changed. It now saves a time series of the resolver state as a CSV and plots the timeseries as a PDF.
 - _config.ini_ has 2 new parameters to define, what the key tag of the current key is and what the key tag of the new tag is. The latter can be left blank if still unknown.
