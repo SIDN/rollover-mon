@@ -20,7 +20,6 @@ def calc_keyid(flags, protocol, algorithm, dnskey):
 
 
 def plot_timeseries(timeseries, title, path):
-
     color_dict = {'secure': 'green',
                     'insecure': 'yellow',
                     'bogus': 'red',
@@ -35,10 +34,46 @@ def plot_timeseries(timeseries, title, path):
     for column in timeseries:
         ax.plot(timeseries[column], label=column, color = color_dict[column])
 
-    ax.set_ylabel('Probes (%)')
+    ax.set_ylabel('Vantage Points (%)')
     ax.set_xlabel('Date')
-    ax.set_ylim(0)
+    ax.set_ylim(0, 100)
+    ax.set_title('Resolvers treating the Zone as Secure, Insecure or Bogus')
 
     ax.legend()
     fig.autofmt_xdate()
     fig.savefig(path+'/'+title+'_trustchain.pdf')
+
+
+def plot_timeseries_propdelay(timeseries, title, path):
+
+    fig, ax = plt.subplots()
+
+    for column in timeseries:
+        ax.plot(timeseries[column], label=column)
+
+    ax.set_ylabel('Vantage Points (%)')
+    ax.set_xlabel('Date')
+    ax.set_ylim(0)
+    ax.set_title('Propagation Delay')
+
+    ax.legend()
+    fig.autofmt_xdate()
+    fig.savefig(path+'/'+title+'.pdf')
+
+
+def plot_timeseries_pubdelay(timeseries, title, path, key_tag):
+
+    fig, ax = plt.subplots()
+
+    for server_key in timeseries:
+        if server_key[1] == key_tag:
+            ax.plot(timeseries[server_key], label=server_key[0])
+
+    ax.set_ylabel('Vantage Points (%)')
+    ax.set_xlabel('Date')
+    ax.set_ylim(0)
+    ax.set_title(f'Publication Delay for Key {key_tag}')
+
+    ax.legend()
+    fig.autofmt_xdate()
+    fig.savefig(path+'/'+title+'.pdf')

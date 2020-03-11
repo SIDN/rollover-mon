@@ -2,6 +2,11 @@
 
 ## Latest Change (2020-03-10)
 
+- For the option _pubdelay_ and _propdelay_ the behavior of the _--details_ parameter has changed. It now saves a time series of the resolver state as a CSV and plots the timeseries as a PDF.
+- _config.ini_ has 2 new parameters to define, what the key tag of the current key is and what the key tag of the new tag is. The latter can be left blank if still unknown.
+
+## Latest Change (2020-03-10)
+
 - For the option _trustchain_ the behavior of the _--details_ parameter has changed. It now saves a time series of the resolver state as a CSV and plots the timeseries as a PDF.
 - Plotting requires matplotlib library
 - _config.ini_ has 2 new parameters to define where to store the CSV and PDF
@@ -236,15 +241,8 @@ that are 'secure' are signs for a failure during the rollover.
 **Details**
 
 With the option '--details', a more detailed output can be produced. 
-Its output depends on the chosen option:
 
-- propdelay' and 'pubdelay' options
-
-Shows per query interval, how many resolvers or authoritative name servers (in %) see which key.
-
-- 'trustchain' option
-
-Does not generate an output but generates a time series of the state of the measured resolvers across and stores it as a CSV.
+It does not generate an output but generates a time series of the state of the measured resolvers across and stores it as a CSV.
 The CSV is stored in the location defined in the _[OUTPUT]_ --> _csv_path_ parameter defined in _config.ini_.
 Every time the command is run, a new CSV is created and the old one is overwritten.
 

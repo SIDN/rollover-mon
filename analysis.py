@@ -5,7 +5,7 @@ from datetime import timedelta
 from ripe.atlas.sagan import DnsResult
 import pandas as pd
 
-from misc.tools import calc_keyid, plot_timeseries
+from misc.tools import calc_keyid, plot_timeseries, plot_timeseries_pubdelay, plot_timeseries_propdelay
 from misc.config import config
 
 
@@ -24,15 +24,15 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
         responses_counter_ksk = 0
 
         
-        
-        if attributes[0] == 'pubdelay':
-            print('Monitoring {} of {} at {} ({} - {})'.format(
-                attributes[0], attributes[1].upper(), attributes[2], 
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
-        else:
-            print('Monitoring {} of {} (IPv{} ({} - {}))'.format(
-                attributes[0], attributes[1].upper(), attributes[2], 
-                start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+        if not details:
+            if attributes[0] == 'pubdelay':
+                print('Monitoring {} of {} at {} ({} - {})'.format(
+                    attributes[0], attributes[1].upper(), attributes[2], 
+                    start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
+            else:
+                print('Monitoring {} of {} (IPv{} ({} - {}))'.format(
+                    attributes[0], attributes[1].upper(), attributes[2], 
+                    start_date.strftime('%Y-%m-%d %H:%M'), stop_date.strftime('%Y-%m-%d %H:%M')))
         
         
 
@@ -89,19 +89,18 @@ def get_state_publication_and_propagation(msm_results, msm_attributes, start_dat
 
                                     time_series.append([created, attributes[2], key_tag])
 
+            if not details:
+                print('Key Tag\t# Observed (Share %)')
+                for key in keys_zsk.keys():
+                    print('{}\t\t{} ({}%)'.format(key, keys_zsk[key], round(keys_zsk[key]/responses_counter_zsk*100,2)))
 
-            print('Key Tag\t# Observed (Share %)')
-            for key in keys_zsk.keys():
-                print('{}\t\t{} ({}%)'.format(key, keys_zsk[key], round(keys_zsk[key]/responses_counter_zsk*100,2)))
-
-            for key in keys_ksk.keys():
-                print('{}\t\t{} ({}%)'.format(key, keys_ksk[key], round(keys_ksk[key]/responses_counter_ksk*100,2)))
+                for key in keys_ksk.keys():
+                    print('{}\t\t{} ({}%)'.format(key, keys_ksk[key], round(keys_ksk[key]/responses_counter_ksk*100,2)))
 
 
     if details:
-        get_details(time_series, attributes)
-
-    return 
+        get_details(time_series, attributes, attributes[0])
+ 
 
 
 def get_state_trust_chain(msm_results, msm_attributes, start_date, stop_date, details):
@@ -332,8 +331,11 @@ def define_state(state_valid, state_bogus):
         return 'bogus'
 
 
-def get_details(time_series, attributes):
-    """Returns the results as a time series."""
+def get_details(time_series, attributes, msm_type):
+    """
+    Returns the results as a time series,
+    stores it as a CSV and plots it as PDF
+    """
 
     if len(time_series) == 0:
         return
@@ -347,12 +349,47 @@ def get_details(time_series, attributes):
         freq = str(config['TTLS']['ttl_'+attributes[1]])+'S'  
 
     df = df.groupby(pd.Grouper(key='created', freq=freq)).apply(lambda x: x.groupby(['target', 'state']).count())
+    df = df['created']
     df = df.unstack().fillna(0)
-    df = df.apply(lambda x: x/x.sum()*100, axis=1)
-    df = df.stack()
-    df = df.unstack(level=1)
-    df = df['created'].unstack().fillna(0)
+
+
+    cols = [int(col) for col in df.columns.tolist()]
+    if config['ROLLOVER']['key_tag_new'] == '':
+        key_tag_new = -1
+    else:
+        key_tag_new = int(config['ROLLOVER']['key_tag_new'])
     
-    print(df.reset_index().to_csv(index=False))
+    key_tag_old = int(config['ROLLOVER']['key_tag_old'])
+
+
+    if not (key_tag_new in cols):
+        df[key_tag_new] = 0
+    if not (key_tag_old in cols):
+        df[key_tag_old] = 0
+
+    df = df[[key_tag_old, key_tag_new]]
+    df = df.apply(lambda x: x/x.sum()*100, axis=1)
+
+    if key_tag_new == -1:
+        df = df.drop(key_tag_new, axis=1)
+    
+    df = df.stack()
+
+    if msm_type == 'propdelay':
+        df = df.unstack(level=1)['4'].unstack()
+        
+        plot_timeseries_propdelay(df, msm_type, config['OUTPUT']['plot_path'])
+
+    else:
+        df = df.unstack(level=1).unstack()
+
+        if key_tag_new == -1:
+            plot_timeseries_pubdelay(df, msm_type, config['OUTPUT']['plot_path'], key_tag_old)
+        else:
+            plot_timeseries_pubdelay(df, msm_type, config['OUTPUT']['plot_path'], key_tag_new)
+
+
+    df.reset_index().to_csv(config['OUTPUT']['csv_path']+'/'+msm_type+'_timeseries.csv',
+                             index=False, )
 
     return
