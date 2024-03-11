@@ -1,0 +1,63 @@
+[ROLLOVER]
+# The zone of which the keys are rolled e.g.
+# zone = nl.
+zone =
+
+
+[DATABASE]
+# Absolute path to the SQLite DB file
+db_path = ./rollover.db
+
+
+[TTLS]
+# The TTLs in seconds of the records that need to be replaced. Leave empty if not applicable
+ttl_dnskey = 3600
+ttl_rrsig = 3600
+ttl_ds = 3600
+
+
+[MEASUREMENTS]
+# Defines how often the probes will query for the records (in seconds)
+msm_frequency_publication_delay = 300
+
+# Measurements for propagation delay are carried out by default once every TTL.
+# Change settings below if different frequency preferred
+msm_frequency_propagation_delay_dnskey =
+msm_frequency_propagation_delay_rrsig =
+msm_frequency_propagation_delay_ds =
+
+# Domains to valid and bogus records to monitor the trust chain
+trust_chain_valid =
+# This domain is always bogus. Validating resolvers should always return a servfail.
+# This domain could stay unchanged or replaced by a bogus domain name under your control.
+trust_chain_bogus = servfail.nl
+
+
+[CHILDREN]
+# IP addresses of the authoritative name servers of the domain that is rolling its key
+# These are necessary for monitoring the propagation delay
+
+[PARENTS]
+# IP addresses of the authoritative name servers of the parent domain
+# These are necessary for monitoring the propagation delay
+# E.g. ns1.dns.nl = 194.0.28.53, 2001:678:2c:0:194:0:28:53
+
+
+[RIPE]
+# Your API key.
+# With this key you must be able to create new measurements,
+# read measurement results, and stop measurements
+# Find more information here: https://atlas.ripe.net/docs/keys/
+api_key =
+
+# Which probes should be used for the measurement
+# Use 'all" for every available probe (user needs enough credits and raise their limits at RIPE)
+# or use a number x to select x random probes
+# or leave empty to configure probes more fine grained with settings below
+probes = 100
+
+[OUTPUT]
+# Where to store the created figures
+figures = ./figs
+# The Default log level
+loglevel = INFO
