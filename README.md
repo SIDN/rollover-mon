@@ -1,4 +1,4 @@
-# Rollover Mon (Beta) README
+# Rollover Mon README
 
 
 ## Introduction 
@@ -26,14 +26,13 @@ You can find more information about DNSSEC rollovers [here](https://tools.ietf.o
 
 ### Requirements
 
-You need to install the following packages:
+You need to install the following python libraries:
 
 ```
 pandas
 matplotlib
 ripe.atlas.sagan
 ripe.atlas.cousteau
-
 ```
 
 ### Steps
@@ -47,7 +46,7 @@ detail.
 
 You also need to create a directory called `figs`. This is where the figures will be stored.
 
-#### 2. Initiate Database
+#### 2. Initiate database
 
 Create an empty file where the database should be located. This should be the same file as defined in the config file.
 
@@ -58,7 +57,7 @@ After this step. You're good to go.
 
 ## Usage
 
-### Initiate Measurements
+### Initiate measurements
 
 To monitor a rollover, the measurements should be
 started **before** the beginning of a stage (that is, before a new key, signature
@@ -70,7 +69,7 @@ Operators can initiate three different types of measurements:
 - measurements to monitor the deployment and withdrawal of the records from indirectly from the perspective of recursive resolvers of RIPE Atlas probes (propagation delay)
 - measurements to monitor the trust chain
 
-#### Monitor Publication Delay
+#### Monitor publication delay
 
 The command to start measurements of the publication delay is as follows:
 
@@ -86,7 +85,7 @@ servers of the zone of which the keys are rolled. If 'ds' is selected, then
 the name servers of the parent zone are queried.
 
 
-#### Monitor Propagation Delay
+#### Monitor propagation delay
 
 The command to start measurements of the propagation delay is as follows:
 
@@ -108,7 +107,7 @@ If we omit the '--stop-date' parameter, the measurement runs forever and
 needs to be stopped with the '--stop' parameter (see below).
 
 
-#### Monitor Trust Chain
+#### Monitor trust chain
 
 The command to start measurements of the trust chain is as follows:
 
@@ -121,9 +120,11 @@ Note, that we do not have to set the '--record' parameter.
 Also, the measurements for the trust chain can be scheduled with '--start-date'
 and '--stop-date'.
 
+Note: Depending on the measurement frequency, which depends on the TTL of your DNSKEY, you might need to wait up to 
+two times the TTL before you will be able to get an output.
 
 
-### Stop Measurements
+### Stop measurements
 
 Stopping the measurements works similar to starting the measurements, but
 instead of adding the '--start' argument we need to add the '--stop' argument.
@@ -139,7 +140,7 @@ python rollover_mon.py propdelay --record [dnskey|ds] --stop
 python rollover_mon.py trustchain  --stop
 ```
 
-### Get Rollover State
+### Get rollover state
 
 To get the state of the rollover, the following command is used:
 
@@ -173,20 +174,20 @@ database and fetches the missing measurement results. Depending on when we've ex
 the recent measurements might take a while.
 
 
-### The Output
+## Output
 
 **Figure** 
 
-The commands above will create a new figure, located in the directory configured in the configuration file, showing which 
-keys and DS records are published where, how far the records have propagated, and to what extent resolvers can validate 
-the zone.
+Commands with the `--state` argument will create a new figure, located in the directory configured in the configuration file.
+The figures show which keys and DS records are published where, how far the records have propagated, and to what extent 
+resolvers can validate the zone.
 
 **JSON**
 
 With the option '--json', the software generates a JSON objects of the measurement results and prints it on the 
 command line.
 
-### Remove noise
+## Remove noise
 
 Internet measurements can be noisy, and measurements performed with RIPE Atlas are no exception. Some recursive resolvers,
 used by RIPE Atlas probes might always fail to validate your zone. For this reason, you might want to ignore measurements 

@@ -34,11 +34,23 @@ def analyze_propdelay(df, details, figure):
         df['flags'] = 'DS'
         record = 'DS'
 
-    df_state = (df
-                .set_index('ts_dt')
-                .groupby(pd.Grouper(freq=config['TTLS'][f'ttl_{df["query_type"].iloc[0]}'] + 's'))
-                .apply(lambda x: x.groupby(['target', 'flags', 'key_tag'])['vp'].nunique())
-                )
+    if df['key_tag'].nunique() > 1:
+        df_state = (df
+                    .set_index('ts_dt')
+                    .groupby(pd.Grouper(freq=config['TTLS'][f'ttl_{df["query_type"].iloc[0]}'] + 's'))
+                    .apply(lambda x: x.groupby(['key_tag', 'flags', 'target'])['vp'].nunique())
+                    # .apply(lambda x: x.groupby(['key_tag', 'flags', 'target'])['vp'].nunique())
+                    .unstack()
+                    .unstack()
+                    .unstack()
+                    .dropna(axis=1, how='all')
+                    )
+    else:
+        df_state = (df
+                    .set_index('ts_dt')
+                    .groupby(pd.Grouper(freq=config['TTLS'][f'ttl_{df["query_type"].iloc[0]}'] + 's'))
+                    .apply(lambda x: x.groupby(['target', 'flags', 'key_tag'])['vp'].nunique())
+                    )
 
     df_state_sum = (df
                     .set_index('ts_dt')
@@ -50,7 +62,7 @@ def analyze_propdelay(df, details, figure):
         plot_propdelay(df_state, record)
 
     if details:
-        print(get_json_pubdelay_propdelay(df_state, df_state_sum))
+        print(get_json_pubdelay_propdelay(df_state.fillna(0), df_state_sum.fillna(0)))
 
 
 def analyze_pubdelay(df, details, figure):
@@ -60,29 +72,42 @@ def analyze_pubdelay(df, details, figure):
         df['flags'] = 'DS'
         record = 'DS'
 
-    df_state = (df
-                .set_index('ts_dt')
-                .groupby(pd.Grouper(freq=config['MEASUREMENTS'][f'msm_frequency_publication_delay'] + 's'))
-                .apply(lambda x: x.groupby(['target', 'flags', 'key_tag'])['vp'].nunique())
-                )
+    if df['key_tag'].nunique() > 1:
+        df_state = (df
+                    .set_index('ts_dt')
+                    .groupby(pd.Grouper(freq=config['MEASUREMENTS'][f'msm_frequency_publication_delay'] + 's'))
+                    .apply(lambda x: x.groupby(['key_tag', 'flags', 'target'])['vp'].nunique())
+                    # .apply(lambda x: x.groupby(['key_tag', 'flags', 'target'])['vp'].nunique())
+                    .unstack()
+                    .unstack()
+                    .unstack()
+                    .dropna(axis=1, how='all')
+                    )
+    else:
+        df_state = (df
+                    .set_index('ts_dt')
+                    .groupby(pd.Grouper(freq=config['MEASUREMENTS'][f'msm_frequency_publication_delay'] + 's'))
+                    .apply(lambda x: x.groupby(['target', 'flags', 'key_tag'])['vp'].nunique())
+                    )
+
 
     df_state_sum = (df
                     .set_index('ts_dt')
                     .groupby(pd.Grouper(freq=config['MEASUREMENTS'][f'msm_frequency_publication_delay'] + 's'))
                     .apply(lambda x: x.groupby(['target', 'flags'])['vp'].nunique())
                     )
+
     if figure:
         plot_pubdelay(df_state, record)
 
     if details:
-        print(get_json_pubdelay_propdelay(df_state, df_state_sum))
+        print(get_json_pubdelay_propdelay(df_state.fillna(0), df_state_sum.fillna(0)))
 
 
 def analyze_trustchain(df, details, figure, groundtruth=False):
-
     df_state = (df
                 .set_index('ts_dt')
-                .groupby(pd.Grouper(freq=str(int(config['TTLS']['ttl_dnskey'])*2) + 's'))
+                .groupby(pd.Grouper(freq=str(int(config['TTLS']['ttl_dnskey']) * 2) + 's'))
                 .apply(lambda x: x.groupby(['target', 'vp', 'return_code', 'query_type'])['ts'].count())
                 .unstack()
                 .unstack()
@@ -90,7 +115,6 @@ def analyze_trustchain(df, details, figure, groundtruth=False):
                 )
 
     if df_state.shape[1] == 1:
-        print(df_state.head())
         logging.warning('Not enough trustchain mesurements. Abort')
         return
 
@@ -163,8 +187,6 @@ def analyze_trustchain(df, details, figure, groundtruth=False):
     df_state_v4 = df_state_v4.fillna(0)
     df_state_v6 = df_state_v6.fillna(0)
 
-
-
     if details:
         print(get_json_trustchain(df_state_v4, df_state_v6))
 
@@ -235,7 +257,7 @@ def plot_pubdelay(df_state, record):
         for nameserver in nameservers:
             if key_type in df_state[nameserver].columns.levels[0].tolist():
                 df_zsk_ksk = df_state[nameserver][key_type]
-                df_zsk_ksk = df_zsk_ksk.divide(df_zsk_ksk.sum(1), axis=0) * 100
+                df_zsk_ksk = df_zsk_ksk.divide(df_zsk_ksk.max(1), axis=0) * 100
                 for key_tag in df_zsk_ksk.columns:
                     ax.plot(df_zsk_ksk[key_tag], label=f'{ips_dict[nameserver]} ({nameserver}): {key_tag}', marker='o')
 
@@ -260,6 +282,7 @@ def plot_pubdelay(df_state, record):
 
 
 def plot_propdelay(df_state, record):
+
     ipvs = (df_state.columns.levels[0].tolist())
 
     if record == 'DS':
@@ -273,7 +296,7 @@ def plot_propdelay(df_state, record):
         for ipv in ipvs:
             if key_type in df_state[ipv].columns.levels[0].tolist():
                 df_zsk_ksk = df_state[ipv][key_type]
-                df_zsk_ksk = df_zsk_ksk.divide(df_zsk_ksk.sum(1), axis=0) * 100
+                df_zsk_ksk = df_zsk_ksk.divide(df_zsk_ksk.max(1), axis=0) * 100
                 for key_tag in df_zsk_ksk.columns:
                     linestyle = '-'
                     if ipv == '4':

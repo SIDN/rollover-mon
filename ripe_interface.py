@@ -157,8 +157,8 @@ def collect_measurement_results(monitoring_goal, query_type, start_date, stop_da
                 logging.info(f'Stored measurements for {msm_id} are not up to date. '
                              f'Stored: {dt.datetime.fromtimestamp(latest_ts[-1], dt.UTC)}, Stop Date: {stop_date}')
                 fetch_from_ripe = True
-                # Always look 15 minutes into the past to fetch late results
-                ripe_start_date = latest_ts[-1] - 15 * 60
+                # Always look 5 minutes into the past to fetch late results
+                ripe_start_date = latest_ts[-1] - 60 * 5
         else:
             fetch_from_ripe = True
             # If DB is empty, fetch data from the start
@@ -251,19 +251,19 @@ def create_source():
         else:
             requested = int(config['RIPE']['probes'])
 
-        if config['RIPE']['probe_ids'] is not None:
-            probe_selector = 'probes'
-            value = []
-            for probe_id in config['RIPE']['probe_ids'].split(','):
-                value.append(probe_id.strip())
-
-        elif config['RIPE']['as_nr'] is not None:
-            probe_selector = 'asn'
-            value = int(config['RIPE']['as_nr'])
-
-        elif config['RIPE']['country'] is not None:
-            probe_selector = 'country'
-            value = config['RIPE']['country']
+        # if config['RIPE']['probe_ids'] is not None:
+        #     probe_selector = 'probes'
+        #     value = []
+        #     for probe_id in config['RIPE']['probe_ids'].split(','):
+        #         value.append(probe_id.strip())
+        #
+        # elif config['RIPE']['as_nr'] is not None:
+        #     probe_selector = 'asn'
+        #     value = int(config['RIPE']['as_nr'])
+        #
+        # elif config['RIPE']['country'] is not None:
+        #     probe_selector = 'country'
+        #     value = config['RIPE']['country']
 
         return AtlasSource(requested=requested,
                            type=probe_selector,

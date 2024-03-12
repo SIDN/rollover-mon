@@ -102,7 +102,6 @@ def main():
     elif monitoring_target == 'groundtruth':
         results = ripe_interface.collect_measurement_results('trustchain', record, start_date, stop_date)
         if results is not None:
-            print('groundtruth')
             analysis.get_state(results, 'trustchain', details=False, figure=False, groundtruth=True)
 
 
