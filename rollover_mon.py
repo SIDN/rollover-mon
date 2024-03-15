@@ -3,6 +3,7 @@ from datetime import datetime
 import analysis
 import ripe_interface
 from misc.config import config
+from pathlib import Path
 
 from misc.argparser import parser
 
@@ -76,6 +77,9 @@ def parse_args(args):
 
 def main():
     logging.basicConfig(level=log_level_info[config['OUTPUT']['loglevel']])
+
+    Path(config['OUTPUT']['figures']+'/servers').mkdir(parents=True, exist_ok=True)
+
 
     args = parser.parse_args()
     try:
