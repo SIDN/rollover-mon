@@ -201,7 +201,6 @@ def analyze_trustchain(df, details, figure, groundtruth=False):
 
 
 def get_json_pubdelay_propdelay(df_state, df_state_sum):
-
     msm_json = defaultdict(lambda: defaultdict(
         lambda: defaultdict(
             lambda: defaultdict(
@@ -218,7 +217,6 @@ def get_json_pubdelay_propdelay(df_state, df_state_sum):
 
                         share = vps / df_state_sum.loc[ts_dt][target][keytype] * 100
                         msm_json[int(ts_dt.timestamp())][target][keytype][keytag]['share'] = round(share, 2)
-
 
     return json.dumps(msm_json)
 
@@ -289,7 +287,8 @@ def plot_pubdelay(df_state, record, nameservers):
         if len(nameservers) > 1:
             fig.savefig(f'./{config["OUTPUT"]["figures"]}/pubdelay_{key_type_txt}.png')
         else:
-            fig.savefig(f'./{config["OUTPUT"]["figures"]}/servers/pubdelay_{key_type_txt}_{ips_dict[nameservers[0]].replace('.','_')}_{nameservers[0]}.png')
+            fig.savefig(
+                f'./{config["OUTPUT"]["figures"]}/servers/pubdelay_{key_type_txt}_{ips_dict[nameservers[0]].replace('.', '_')}_{nameservers[0]}.png')
 
 
 def plot_propdelay(df_state, record):
@@ -304,7 +303,6 @@ def plot_propdelay(df_state, record):
         fig, ax = plt.subplots()
 
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
-
 
         for ipv in ipvs:
             if key_type in df_state[ipv].columns.levels[0].tolist():
@@ -337,7 +335,6 @@ def plot_propdelay(df_state, record):
 
 
 def plot_trustchain(df_state_v4, df_state_v6):
-
     state_style = {'secure': ['green', '-', 'o'],
                    'insecure': ['orange', '--', 's'],
                    'bogus': ['red', '-.', 'x']}
