@@ -160,6 +160,16 @@ def store_excluded_vps(vps):
         connection.commit()
 
 
+def get_oldest_measurement():
+    logging.info('Getting oldest measurement ID')
+    with connect_db() as connection:
+        cursor = connection.cursor()
+        cursor.execute('SELECT msm_id from measurements ORDER BY ts')
+
+        return cursor.fetchone()
+
+
+
 def stop_measurement(msm_id):
     connection = connect_db()
     cursor = connection.cursor()

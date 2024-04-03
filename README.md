@@ -26,6 +26,8 @@ You can find more information about DNSSEC rollovers [here](https://tools.ietf.o
 
 ### Requirements
 
+`>= Python 3.12`
+
 You need to install the following python libraries:
 
 ```

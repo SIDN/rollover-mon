@@ -287,8 +287,7 @@ def plot_pubdelay(df_state, record, nameservers):
         if len(nameservers) > 1:
             fig.savefig(f'./{config["OUTPUT"]["figures"]}/pubdelay_{key_type_txt}.png')
         else:
-            fig.savefig(
-                f'./{config["OUTPUT"]["figures"]}/servers/pubdelay_{key_type_txt}_{ips_dict[nameservers[0]].replace('.', '_')}_{nameservers[0]}.png')
+            fig.savefig(f'./{config["OUTPUT"]["figures"]}/servers/pubdelay_{key_type_txt}_{ips_dict[nameservers[0]].replace('.', '_')}_{nameservers[0]}.png')
 
 
 def plot_propdelay(df_state, record):

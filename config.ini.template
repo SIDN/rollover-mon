@@ -43,6 +43,9 @@ trust_chain_bogus = servfail.nl
 # These are necessary for monitoring the propagation delay
 # e.g.
 # ns1.dns.nl = 194.0.28.53, 2001:678:2c:0:194:0:28:53
+# Note:
+# RIPE Atlas limits the number of concurrent measurements to the same host. For this reason, you might not be able
+# to measure all root servers
 
 [RIPE]
 # Your API key.
@@ -50,6 +53,10 @@ trust_chain_bogus = servfail.nl
 # read measurement results, and stop measurements
 # Find more information here: https://atlas.ripe.net/docs/keys/
 api_key =
+
+# You can configure another RIPE account than yours to bill the credits to.
+# This account needs to add you to the list of users that are allowed to charge their account.
+bill_to
 
 # Which probes should be used for the measurement
 # Use 'all" for every available probe (user needs enough credits and raise their limits at RIPE)

@@ -74,8 +74,6 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
             create_measurement(monitoring_goal, config['MEASUREMENTS']['trust_chain_bogus'], 'AAAA', 6, True,
                                True))
 
-    sources = create_source()
-
     # Define timing of measurements
     if start_date is None:
         start_date = dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1)
@@ -92,14 +90,29 @@ def create_measurements(monitoring_goal, query_type, start_date, stop_date):
             print("'stop-date' must be after current time")
             return
 
-    atlas_request = AtlasCreateRequest(
-        start_time=start_date,
-        stop_time=stop_date,
-        key=config['RIPE']['api_key'],
-        measurements=measurements,
-        sources=[sources],
-        bill_to='sidnlabs@sidn.nl'
-    )
+    sources = create_source()
+
+    bill_to = config['RIPE']['bill_to']
+
+    if bill_to is not None:
+        logging.info(f'Charge credits to {bill_to}.')
+        atlas_request = AtlasCreateRequest(
+            start_time=start_date,
+            stop_time=stop_date,
+            key=config['RIPE']['api_key'],
+            measurements=measurements,
+            sources=[sources],
+            bill_to=bill_to
+        )
+
+    else:
+        atlas_request = AtlasCreateRequest(
+            start_time=start_date,
+            stop_time=stop_date,
+            key=config['RIPE']['api_key'],
+            measurements=measurements,
+            sources=[sources],
+        )
 
     is_success, response = atlas_request.create()
 
@@ -239,17 +252,23 @@ def create_measurement(monitoring_goal, target, query_type, af, use_probe_resolv
 def create_source():
     """Selects the RIPE Atlas probes for the measurements."""
 
-    # TO DO: Continent filter
-    probe_selector = None
-    requested = 0
-    value = "WW"
-    probe_selector = "area"
+    # Check if measurement exists and if yes, reuse probes
+    last_msm = database.get_oldest_measurement()
+    if last_msm is not None:
+        logging.info(f'Reusing probes from measurement {last_msm[0]}')
+        value = int(last_msm[0])
+        msm_type = 'msm'
+
+    else:
+        value = "WW"
+        msm_type = "area"
 
     if config['RIPE']['probes'] is not None:
         if config['RIPE']['probes'] == 'all':
             requested = 10000
         else:
             requested = int(config['RIPE']['probes'])
+
 
         # if config['RIPE']['probe_ids'] is not None:
         #     probe_selector = 'probes'
@@ -265,6 +284,6 @@ def create_source():
         #     probe_selector = 'country'
         #     value = config['RIPE']['country']
 
-        return AtlasSource(requested=requested,
-                           type=probe_selector,
-                           value=value)
+    return AtlasSource(requested=requested,
+                       type=msm_type,
+                       value=value)
